@@ -34,8 +34,14 @@ async function fetchWithApiFallback(path, options) {
     return { response: primaryResponse, retriedWithoutApiPrefix: false };
   }
 
-  const fallbackResponse = await fetch(path, options);
-  return { response: fallbackResponse, retriedWithoutApiPrefix: true };
+  try {
+    const fallbackResponse = await fetch(path, options);
+    return { response: fallbackResponse, retriedWithoutApiPrefix: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown network error";
+    throw new Error(`Fallback request failed after /api retry trigger: ${message}`);
+  }
 }
 
 /**

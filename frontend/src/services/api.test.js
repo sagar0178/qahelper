@@ -90,4 +90,22 @@ describe("api service fallback behavior", () => {
     );
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
+
+  test("throws clear error when fallback request itself throws", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 405,
+        json: async () => ({}),
+      })
+      .mockRejectedValueOnce(new Error("Network down"));
+
+    const { generateTestArtifacts } = await import("./api");
+
+    await expect(generateTestArtifacts("User can login")).rejects.toThrow(
+      "Fallback request failed after /api retry trigger: Network down"
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
 });
