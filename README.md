@@ -76,15 +76,63 @@ The React app will open at **http://localhost:3000**
 
 ---
 
-## ▲ Vercel Deployment Notes
+## ▲ Vercel Deployment (Frontend + Backend)
 
-When deploying frontend and backend separately, set these variables:
+### Why you see `405 (after retry without /api)`
 
-- Frontend (Vercel project): `REACT_APP_API_URL=https://<your-backend-domain>`
-- Backend: `CORS_ALLOW_ORIGINS=https://<your-frontend-domain>`
+In production, frontend uses `/api` by default when `REACT_APP_API_URL` is not set.
+If frontend and backend are in separate Vercel projects, `/api` points to the frontend host (not your backend), which can cause 404/405.
 
-If backend and frontend are served from the same domain with an `/api` prefix, frontend defaults to `/api` in production.
-If `/api` responds with 404/405, the frontend automatically retries without the `/api` prefix.
+### Recommended setup: two Vercel projects
+
+This repository includes ready-to-use deployment files:
+
+- `backend/vercel.json` (FastAPI serverless routing)
+- `backend/.env.example`
+- `frontend/.env.example`
+
+#### 1) Deploy backend project
+
+1. Create a new Vercel project from this repo.
+2. Set **Root Directory** to `backend`.
+3. Add environment variable:
+   - `CORS_ALLOW_ORIGINS=https://<your-frontend-domain>.vercel.app`
+4. Deploy.
+
+Verify backend directly:
+
+- `GET https://<your-backend-domain>.vercel.app/`
+- `POST https://<your-backend-domain>.vercel.app/generate`
+- `GET https://<your-backend-domain>.vercel.app/history`
+
+#### 2) Deploy frontend project
+
+1. Create another Vercel project from the same repo.
+2. Set **Root Directory** to `frontend`.
+3. Add environment variable:
+   - `REACT_APP_API_URL=https://<your-backend-domain>.vercel.app`
+4. Redeploy frontend.
+
+This resolves the `/api` fallback issue by calling backend directly.
+
+### Optional: same-domain `/api` setup
+
+Only use `/api` if you intentionally configure a rewrite/proxy from frontend domain to backend domain.
+Example `frontend/vercel.json` rewrite:
+
+```json
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://<your-backend-domain>.vercel.app/:path*" }
+  ]
+}
+```
+
+### Production database note
+
+Current backend uses SQLite (`database/qahelper.db`), which is not durable on serverless runtime.
+For reliable history persistence in production, migrate to a hosted database (such as Neon, Supabase, or Railway PostgreSQL).
+
 ⚠️ `CORS_ALLOW_ORIGINS=*` allows requests from any origin and is not recommended for production.
 
 ---
