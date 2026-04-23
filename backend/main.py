@@ -50,6 +50,11 @@ def _get_allowed_origins() -> list[str]:
 
     validated_origins: list[str] = []
     for origin in parsed:
+        if "*" in origin:
+            raise ValueError(
+                "Wildcard origins are only supported as a single '*' value in CORS_ALLOW_ORIGINS."
+            )
+
         parsed_origin = urlparse(origin)
         if parsed_origin.scheme not in {"http", "https"} or not parsed_origin.netloc:
             raise ValueError(
