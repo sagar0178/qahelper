@@ -76,6 +76,17 @@ The React app will open at **http://localhost:3000**
 
 ---
 
+## ▲ Vercel Deployment Notes
+
+When deploying frontend and backend separately, set these variables:
+
+- Frontend (Vercel project): `REACT_APP_API_URL=https://<your-backend-domain>`
+- Backend: `CORS_ALLOW_ORIGINS=https://<your-frontend-domain>`
+
+If backend and frontend are served from the same domain with an `/api` prefix, frontend now defaults to `/api` in production.
+
+---
+
 ## 🖥️ Features
 
 ### Input

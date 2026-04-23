@@ -32,11 +32,23 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ── CORS – allow the React dev server ────────────────────────────────────────
+def _get_allowed_origins() -> list[str]:
+    origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+    if not origins:
+        return ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+    parsed = [origin.strip() for origin in origins.split(",") if origin.strip()]
+    return parsed or ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+
+allowed_origins = _get_allowed_origins()
+allow_all_origins = "*" in allowed_origins
+
+# ── CORS – allow local/dev by default, configurable for deployments ──────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all_origins else allowed_origins,
+    allow_credentials=not allow_all_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

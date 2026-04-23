@@ -11,7 +11,7 @@ import React, { useState } from "react";
 import "./App.css";
 import RequirementInput from "./components/RequirementInput";
 import OutputTabs from "./components/OutputTabs";
-import { generateTestArtifacts } from "./services/api";
+import { generateTestArtifacts, BASE_URL } from "./services/api";
 
 function App() {
   // ── State ────────────────────────────────────────────────────────────────
@@ -121,8 +121,7 @@ function App() {
                     <p className="text-sm font-semibold text-red-700">Generation failed</p>
                     <p className="text-xs text-red-600 mt-0.5">{error}</p>
                     <p className="text-xs text-red-500 mt-1">
-                      Make sure the backend server is running on{" "}
-                      <code className="font-mono">http://localhost:8000</code>
+                      Backend API URL: <code className="font-mono">{BASE_URL}</code>
                     </p>
                   </div>
                 </div>
@@ -176,4 +175,3 @@ function App() {
 }
 
 export default App;
-
