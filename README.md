@@ -131,7 +131,7 @@ Example `frontend/vercel.json` rewrite:
 ### Production database note
 
 Current backend uses SQLite (`database/qahelper.db`), which is not durable on serverless runtime.
-For reliable history persistence in production, migrate to a hosted database (for example Neon, Supabase, or Railway PostgreSQL).
+For reliable history persistence in production, migrate to a hosted database (such as Neon, Supabase, or Railway PostgreSQL).
 
 ⚠️ `CORS_ALLOW_ORIGINS=*` allows requests from any origin and is not recommended for production.
 
