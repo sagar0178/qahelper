@@ -84,7 +84,7 @@ When deploying frontend and backend separately, set these variables:
 - Backend: `CORS_ALLOW_ORIGINS=https://<your-frontend-domain>`
 
 If backend and frontend are served from the same domain with an `/api` prefix, frontend now defaults to `/api` in production.
-Use `CORS_ALLOW_ORIGINS=*` only for public/testing scenarios, because it allows requests from any origin.
+⚠️ `CORS_ALLOW_ORIGINS=*` allows requests from any origin and is not recommended for production.
 
 ---
 

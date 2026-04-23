@@ -53,7 +53,8 @@ def _get_allowed_origins() -> list[str]:
         parsed_origin = urlparse(origin)
         if parsed_origin.scheme not in {"http", "https"} or not parsed_origin.netloc:
             raise ValueError(
-                f"Invalid origin '{origin}' in CORS_ALLOW_ORIGINS. Use http(s)://domain."
+                f"Invalid origin '{origin}' in CORS_ALLOW_ORIGINS. "
+                "Expected format: http://domain or https://domain."
             )
         validated_origins.append(origin)
 
