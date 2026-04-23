@@ -9,6 +9,7 @@ Endpoints:
 
 import json
 import os
+from urllib.parse import urlparse
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -47,7 +48,16 @@ def _get_allowed_origins() -> list[str]:
     if "*" in parsed:
         return ["*"]
 
-    return parsed
+    validated_origins: list[str] = []
+    for origin in parsed:
+        parsed_origin = urlparse(origin)
+        if parsed_origin.scheme not in {"http", "https"} or not parsed_origin.netloc:
+            raise ValueError(
+                f"Invalid origin '{origin}' in CORS_ALLOW_ORIGINS. Use http(s)://domain."
+            )
+        validated_origins.append(origin)
+
+    return validated_origins
 
 
 allowed_origins = _get_allowed_origins()
