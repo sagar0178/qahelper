@@ -14,13 +14,33 @@ function getApiUrl(path) {
   return `${BASE_URL.replace(/\/$/, "")}${path}`;
 }
 
+function getFallbackApiUrl(path) {
+  return path;
+}
+
+function shouldRetryWithoutApiPrefix(response) {
+  return (
+    BASE_URL.replace(/\/$/, "") === "/api" &&
+    (response.status === 404 || response.status === 405)
+  );
+}
+
+async function fetchWithApiFallback(path, options) {
+  const primaryResponse = await fetch(getApiUrl(path), options);
+  if (!shouldRetryWithoutApiPrefix(primaryResponse)) {
+    return primaryResponse;
+  }
+
+  return fetch(getFallbackApiUrl(path), options);
+}
+
 /**
  * POST /generate
  * @param {string} requirement - plain-English software requirement text
  * @returns {Promise<{test_cases, edge_cases, checklist}>}
  */
 export async function generateTestArtifacts(requirement) {
-  const response = await fetch(getApiUrl("/generate"), {
+  const response = await fetchWithApiFallback("/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requirement }),
@@ -39,7 +59,7 @@ export async function generateTestArtifacts(requirement) {
  * @returns {Promise<Array>} list of previous generation records
  */
 export async function fetchHistory() {
-  const response = await fetch(getApiUrl("/history"));
+  const response = await fetchWithApiFallback("/history");
   if (!response.ok) {
     throw new Error(`Failed to fetch history: ${response.status}`);
   }

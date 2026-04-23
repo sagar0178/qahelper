@@ -83,7 +83,8 @@ When deploying frontend and backend separately, set these variables:
 - Frontend (Vercel project): `REACT_APP_API_URL=https://<your-backend-domain>`
 - Backend: `CORS_ALLOW_ORIGINS=https://<your-frontend-domain>`
 
-If backend and frontend are served from the same domain with an `/api` prefix, frontend now defaults to `/api` in production.
+If backend and frontend are served from the same domain with an `/api` prefix, frontend defaults to `/api` in production.
+If `/api` responds with 404/405, the frontend automatically retries without the `/api` prefix.
 ⚠️ `CORS_ALLOW_ORIGINS=*` allows requests from any origin and is not recommended for production.
 
 ---
