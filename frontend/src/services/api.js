@@ -10,8 +10,38 @@ export const BASE_URL =
   process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === "development" ? DEV_BASE_URL : PROD_BASE_URL);
 
+function normalizeBaseUrl(url) {
+  return url.replace(/\/$/, "");
+}
+
+const NORMALIZED_BASE_URL = normalizeBaseUrl(BASE_URL);
+const SHOULD_RETRY_WITHOUT_API_PREFIX = NORMALIZED_BASE_URL === "/api";
+
 function getApiUrl(path) {
-  return `${BASE_URL.replace(/\/$/, "")}${path}`;
+  return `${NORMALIZED_BASE_URL}${path}`;
+}
+
+function shouldRetryWithoutApiPrefix(response) {
+  return (
+    SHOULD_RETRY_WITHOUT_API_PREFIX &&
+    (response.status === 404 || response.status === 405)
+  );
+}
+
+async function fetchWithApiFallback(path, options) {
+  const primaryResponse = await fetch(getApiUrl(path), options);
+  if (primaryResponse.ok || !shouldRetryWithoutApiPrefix(primaryResponse)) {
+    return { response: primaryResponse, retriedWithoutApiPrefix: false };
+  }
+
+  try {
+    const fallbackResponse = await fetch(path, options);
+    return { response: fallbackResponse, retriedWithoutApiPrefix: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown network error";
+    throw new Error(`Fallback request failed after /api retry trigger: ${message}`);
+  }
 }
 
 /**
@@ -20,7 +50,7 @@ function getApiUrl(path) {
  * @returns {Promise<{test_cases, edge_cases, checklist}>}
  */
 export async function generateTestArtifacts(requirement) {
-  const response = await fetch(getApiUrl("/generate"), {
+  const { response, retriedWithoutApiPrefix } = await fetchWithApiFallback("/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requirement }),
@@ -28,7 +58,10 @@ export async function generateTestArtifacts(requirement) {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.detail || `Server error: ${response.status}`);
+    const fallbackSuffix = retriedWithoutApiPrefix
+      ? " (after retry without /api)"
+      : "";
+    throw new Error(err.detail || `Server error: ${response.status}${fallbackSuffix}`);
   }
 
   return response.json();
@@ -39,9 +72,12 @@ export async function generateTestArtifacts(requirement) {
  * @returns {Promise<Array>} list of previous generation records
  */
 export async function fetchHistory() {
-  const response = await fetch(getApiUrl("/history"));
+  const { response, retriedWithoutApiPrefix } = await fetchWithApiFallback("/history");
   if (!response.ok) {
-    throw new Error(`Failed to fetch history: ${response.status}`);
+    const fallbackSuffix = retriedWithoutApiPrefix
+      ? " (after retry without /api)"
+      : "";
+    throw new Error(`Failed to fetch history: ${response.status}${fallbackSuffix}`);
   }
   return response.json();
 }
