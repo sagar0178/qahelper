@@ -9,6 +9,7 @@ Endpoints:
 
 import json
 import os
+from urllib.parse import urlparse
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -32,11 +33,48 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ── CORS – allow the React dev server ────────────────────────────────────────
+DEFAULT_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+
+def _get_allowed_origins() -> list[str]:
+    origins = os.getenv("CORS_ALLOW_ORIGINS")
+    if origins is None:
+        return DEFAULT_ALLOWED_ORIGINS
+
+    parsed = [origin.strip() for origin in origins.split(",") if origin.strip()]
+    if not parsed:
+        return []
+
+    if "*" in parsed:
+        return ["*"]
+
+    validated_origins: list[str] = []
+    for origin in parsed:
+        if "*" in origin:
+            raise ValueError(
+                "Wildcard origins are only supported as a single '*' value in CORS_ALLOW_ORIGINS."
+            )
+
+        parsed_origin = urlparse(origin)
+        if parsed_origin.scheme not in {"http", "https"} or not parsed_origin.netloc:
+            raise ValueError(
+                f"Invalid origin '{origin}' in CORS_ALLOW_ORIGINS. "
+                "Expected format: http://domain or https://domain."
+            )
+        validated_origins.append(origin)
+
+    return validated_origins
+
+
+allowed_origins = _get_allowed_origins()
+allow_all_origins = "*" in allowed_origins
+
+# ── CORS – allow local/dev by default, configurable for deployments ──────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all_origins else allowed_origins,
+    # Wildcard origins cannot be used together with credentials per CORS spec.
+    allow_credentials=not allow_all_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
