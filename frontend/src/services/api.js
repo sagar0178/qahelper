@@ -10,8 +10,12 @@ export const BASE_URL =
   process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === "development" ? DEV_BASE_URL : PROD_BASE_URL);
 
+function normalizeBaseUrl(url) {
+  return url.replace(/\/$/, "");
+}
+
 function getApiUrl(path) {
-  return `${BASE_URL.replace(/\/$/, "")}${path}`;
+  return `${normalizeBaseUrl(BASE_URL)}${path}`;
 }
 
 function getFallbackApiUrl(path) {
@@ -20,7 +24,7 @@ function getFallbackApiUrl(path) {
 
 function shouldRetryWithoutApiPrefix(response) {
   return (
-    BASE_URL.replace(/\/$/, "") === "/api" &&
+    normalizeBaseUrl(BASE_URL) === "/api" &&
     (response.status === 404 || response.status === 405)
   );
 }
