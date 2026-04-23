@@ -14,28 +14,25 @@ function normalizeBaseUrl(url) {
   return url.replace(/\/$/, "");
 }
 
-function getApiUrl(path) {
-  return `${normalizeBaseUrl(BASE_URL)}${path}`;
-}
+const NORMALIZED_BASE_URL = normalizeBaseUrl(BASE_URL);
+const SHOULD_RETRY_WITHOUT_API_PREFIX = NORMALIZED_BASE_URL === "/api";
 
-function getFallbackApiUrl(path) {
-  return path;
+function getApiUrl(path) {
+  return `${NORMALIZED_BASE_URL}${path}`;
 }
 
 function shouldRetryWithoutApiPrefix(response) {
-  return (
-    normalizeBaseUrl(BASE_URL) === "/api" &&
-    (response.status === 404 || response.status === 405)
-  );
+  return SHOULD_RETRY_WITHOUT_API_PREFIX &&
+    (response.status === 404 || response.status === 405);
 }
 
 async function fetchWithApiFallback(path, options) {
   const primaryResponse = await fetch(getApiUrl(path), options);
-  if (!shouldRetryWithoutApiPrefix(primaryResponse)) {
+  if (primaryResponse.ok || !shouldRetryWithoutApiPrefix(primaryResponse)) {
     return primaryResponse;
   }
 
-  return fetch(getFallbackApiUrl(path), options);
+  return fetch(path, options);
 }
 
 /**
