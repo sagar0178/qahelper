@@ -36,12 +36,18 @@ DEFAULT_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 
 def _get_allowed_origins() -> list[str]:
-    origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
-    if not origins:
+    origins = os.getenv("CORS_ALLOW_ORIGINS")
+    if origins is None:
         return DEFAULT_ALLOWED_ORIGINS
 
     parsed = [origin.strip() for origin in origins.split(",") if origin.strip()]
-    return parsed or DEFAULT_ALLOWED_ORIGINS
+    if not parsed:
+        return []
+
+    if "*" in parsed:
+        return ["*"]
+
+    return parsed
 
 
 allowed_origins = _get_allowed_origins()
