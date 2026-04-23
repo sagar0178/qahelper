@@ -32,13 +32,16 @@ app = FastAPI(
     version="1.0.0",
 )
 
+DEFAULT_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+
 def _get_allowed_origins() -> list[str]:
     origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
     if not origins:
-        return ["http://localhost:3000", "http://127.0.0.1:3000"]
+        return DEFAULT_ALLOWED_ORIGINS
 
     parsed = [origin.strip() for origin in origins.split(",") if origin.strip()]
-    return parsed or ["http://localhost:3000", "http://127.0.0.1:3000"]
+    return parsed or DEFAULT_ALLOWED_ORIGINS
 
 
 allowed_origins = _get_allowed_origins()
@@ -48,6 +51,7 @@ allow_all_origins = "*" in allowed_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if allow_all_origins else allowed_origins,
+    # Wildcard origins cannot be used together with credentials per CORS spec.
     allow_credentials=not allow_all_origins,
     allow_methods=["*"],
     allow_headers=["*"],
